@@ -77,17 +77,90 @@ function App() {
     return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
   };
 
+  const [isRegister, setIsRegister] = useState(false);
+  const [regForm, setRegForm] = useState({
+    name: '', username: '', password: '', emoji: '👨'
+  });
+
+  const handleRegister = async () => {
+    if (!regForm.name || !regForm.username || !regForm.password) {
+      setError('Vui lòng điền đầy đủ thông tin!');
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(regForm),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(typeof data === 'string' ? data : 'Đăng ký thất bại!'); return; }
+      // Tự động đăng nhập sau khi đăng ký
+      const loginRes = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: regForm.username, password: regForm.password }),
+      });
+      const loginData = await loginRes.json();
+      localStorage.setItem('user', JSON.stringify(loginData));
+      setUser(loginData);
+      fetchMembers();
+    } catch {
+      setError('Không kết nối được server!');
+    }
+  };
+
   if (!user) {
     return (
       <div style={styles.loginContainer}>
         <h1 style={styles.title}>🏠 FamilyHub</h1>
-        <p style={styles.subtitle}>Đăng nhập để tiếp tục</p>
+        <p style={styles.subtitle}>
+          {isRegister ? 'Tạo tài khoản mới' : 'Đăng nhập để tiếp tục'}
+        </p>
+
         {error && <p style={styles.error}>{error}</p>}
-        <input style={styles.input} placeholder="Username" value={username}
-          onChange={e => setUsername(e.target.value)} />
-        <input style={styles.input} placeholder="Password" type="password"
-          value={password} onChange={e => setPassword(e.target.value)} />
-        <button style={styles.button} onClick={handleLogin}>Đăng nhập</button>
+
+        {isRegister && (
+          <>
+            {/* Chọn emoji */}
+            <p style={{ color: '#8e8e93', fontSize: 13, marginBottom: 8, alignSelf: 'flex-start', paddingLeft: 10 }}>Chọn avatar</p>
+            <div style={styles.emojiRow}>
+              {['👨', '👩', '🧑', '👦', '👧', '👴', '👵', '🧒'].map(e => (
+                <div key={e} onClick={() => setRegForm(f => ({ ...f, emoji: e }))}
+                  style={{
+                    ...styles.emojiOption,
+                    background: regForm.emoji === e ? '#007aff' : '#f2f2f7',
+                    fontSize: 28,
+                  }}>
+                  {e}
+                </div>
+              ))}
+            </div>
+            <input style={styles.input} placeholder="Tên hiển thị *" value={regForm.name}
+              onChange={e => setRegForm(f => ({ ...f, name: e.target.value }))} />
+            <input style={styles.input} placeholder="Username *" value={regForm.username}
+              onChange={e => setRegForm(f => ({ ...f, username: e.target.value }))}
+              autoCapitalize="none" />
+            <input style={styles.input} placeholder="Password *" type="password"
+              value={regForm.password}
+              onChange={e => setRegForm(f => ({ ...f, password: e.target.value }))} />
+            <button style={styles.button} onClick={handleRegister}>Đăng ký</button>
+          </>
+        )}
+
+        {!isRegister && (
+          <>
+            <input style={styles.input} placeholder="Username" value={username}
+              onChange={e => setUsername(e.target.value)} autoCapitalize="none" />
+            <input style={styles.input} placeholder="Password" type="password"
+              value={password} onChange={e => setPassword(e.target.value)} />
+            <button style={styles.button} onClick={handleLogin}>Đăng nhập</button>
+          </>
+        )}
+
+        <button style={styles.switchBtn} onClick={() => { setIsRegister(!isRegister); setError(''); }}>
+          {isRegister ? 'Đã có tài khoản? Đăng nhập' : 'Chưa có tài khoản? Đăng ký'}
+        </button>
       </div>
     );
   }
