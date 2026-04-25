@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import * as lunarCalendar from 'vietnamese-lunar-calendar';
 
 const API_URL = 'http://localhost:8080/api/events';
 
@@ -31,6 +32,27 @@ const MEMBERS = [
 const DAYS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
 export default function CalendarPage() {
+
+
+const getLunarDate = (day: number) => {
+  try {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth() + 1;
+    const result = solarToLunar(day, month, year);
+    return `${result.lunarDay}`;
+  } catch {
+    return '';
+  }
+};
+
+const solarToLunar = (solarDay: number, solarMonth: number, solarYear: number) => {
+  const jd = Math.floor((solarDay - 32075 + Math.floor(1461 * (solarYear + 4800 + Math.floor((solarMonth - 14) / 12)) / 4) + Math.floor(367 * (solarMonth - 2 - Math.floor((solarMonth - 14) / 12) * 12) / 12) - Math.floor(3 * Math.floor((solarYear + 4900 + Math.floor((solarMonth - 14) / 12)) / 100) / 4)));
+  const l = jd - 1721425;
+  const n = Math.floor((l - Math.floor(l / 29.53059)) / 29.53059 + 0.5);
+  const lunarDay = l - Math.floor(29.53059 * n + 0.5) + 1;
+  return { lunarDay: lunarDay > 0 ? lunarDay : lunarDay + 30 };
+};
+
   const [events, setEvents] = useState<Event[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -145,15 +167,24 @@ export default function CalendarPage() {
               onClick={() => day && setSelectedDate(dateStr)}
             >
               {day && (
-                <>
-                  <span style={{ fontSize: 13, fontWeight: isToday ? 'bold' : 'normal' }}>{day}</span>
-                  <div style={s.dotRow}>
-                    {dayEvents.slice(0, 3).map(e => (
-                      <div key={e.id} style={{ ...s.dot, background: e.color }} />
-                    ))}
-                  </div>
-                </>
-              )}
+  <>
+    <span style={{
+      fontSize: 13,
+      fontWeight: isToday ? 'bold' : 'normal',
+      color: isToday ? '#fff' : '#1c1c1e',
+    }}>{day}</span>
+    <span style={{
+      fontSize: 10,
+      color: isToday ? 'rgba(255,255,255,0.8)' : '#8e8e93',
+      lineHeight: 1,
+    }}>{getLunarDate(day)}</span>
+    <div style={s.dotRow}>
+      {dayEvents.slice(0, 3).map(e => (
+        <div key={e.id} style={{ ...s.dot, background: e.color }} />
+      ))}xxw
+    </div>
+</>
+            )}
             </div>
           );
         })}
