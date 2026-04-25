@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import CalendarPage from './CalendarPage';
+import NotesPage from './NotesPage';
 
 const API_URL = 'http://localhost:8080';
 
@@ -131,12 +132,7 @@ function App() {
 
         {activePage === 'calendar' && <CalendarPage />}
 
-        {activePage === 'notes' && (
-          <div style={{ textAlign: 'center', padding: 60, color: '#6b7280' }}>
-            <p style={{ fontSize: 48 }}>📝</p>
-            <p style={{ marginTop: 12 }}>Ghi chú — Sắp ra mắt!</p>
-          </div>
-        )}
+        {activePage === 'notes' && <NotesPage user={user} />}
 
         {activePage === 'shopping' && (
           <div style={{ textAlign: 'center', padding: 60, color: '#6b7280' }}>
